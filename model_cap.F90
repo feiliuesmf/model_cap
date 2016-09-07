@@ -129,39 +129,22 @@ module MODEL_CAP
     type(ESMF_Field)                  :: field
     type(ESMF_Grid)                   :: gridIn, gridOut
     integer                           :: i, j
+    integer                           :: nx=200, ny=200 ! can use model setting
     real(kind=ESMF_KIND_R8),  pointer :: lonPtr(:,:), latPtr(:,:)
     character(ESMF_MAXSTR)            :: transferAction
     
     rc = ESMF_SUCCESS
     
     ! create Grid objects for Fields
-    gridIn = ESMF_GridCreate1PeriDim(minIndex=(/1,1/), maxIndex=(/200,100/), &
-      indexflag=ESMF_INDEX_GLOBAL, coordSys=ESMF_COORDSYS_SPH_DEG, rc=rc)
+    gridIn =  ESMF_GridCreate1PeriDimUfrm(maxIndex=(/nx,ny/), &
+      minCornerCoord=(/0._ESMF_KIND_R8, 0._ESMF_KIND_R8/), &
+      maxCornerCoord=(/200._ESMF_KIND_R8, 200._ESMF_KIND_R8/), &
+      coordSys=ESMF_COORDSYS_CART, &
+      staggerLocList=(/ESMF_STAGGERLOC_CENTER/), rc=rc)
     if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
       line=__LINE__, &
       file=__FILE__)) &
       return  ! bail out
-    call ESMF_GridAddCoord(gridIn, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_GridGetCoord(gridIn, coordDim=1, farrayPtr=lonPtr, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    call ESMF_GridGetCoord(gridIn, coordDim=2, farrayPtr=latPtr, rc=rc)
-    if (ESMF_LogFoundError(rcToCheck=rc, msg=ESMF_LOGERR_PASSTHRU, &
-      line=__LINE__, &
-      file=__FILE__)) &
-      return  ! bail out
-    do j=lbound(lonPtr,2),ubound(lonPtr,2)
-    do i=lbound(lonPtr,1),ubound(lonPtr,1)
-      lonPtr(i,j) = 360./real(200) * (i-1)
-      latPtr(i,j) = 100./real(100) * (j-1) - 50.
-    enddo
-    enddo
       
     gridOut = gridIn ! for now out same as in
     ! importable field: sea_surface_temperature
